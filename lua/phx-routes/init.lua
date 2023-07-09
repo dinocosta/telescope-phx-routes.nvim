@@ -52,8 +52,12 @@ M.phoenix_routes = function(opts)
 				handle:close()
 				local file_path, line_number = result:match('Module: %S+\nFunction: %S+\n(%S+):(%d+)')
 
-				-- Open the file where the controller module for the route is defined.
-				vim.cmd('e ' .. file_path)
+				-- Open the file where the controller module for the route is defined, as well as setting the cursor in the 
+				-- correct line, which, unfortunately only works for `GET` calls, as `mix phx.routes --info` does not allow 
+				-- us to specify what is the HTTP method, so it can not differentiate between, say, the `:index` and `:delete` 
+				-- actions.
+				vim.api.nvim_command('e ' .. file_path)
+				vim.api.nvim_command('exe ' .. line_number)
 			end)
 
 			return true
