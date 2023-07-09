@@ -44,7 +44,16 @@ M.phoenix_routes = function(opts)
 				-- As such, if you need to access, for example, the `url` value you can use `selection["value"]["url"]`.
 				-- You can always use `print(vim.inspect(selection))` to inspect the `selection` variable and what it contains.
 				local selection = action_state.get_selected_entry()
-				vim.api.nvim_put({ selection["value"]["url"] }, "", false, true)
+
+				-- Start a new process to run the `mix phx.routes --info [URL]` command and get its output.
+				-- Match on the output of the command so we can get the file path.
+				local handle = io.popen("mix phx.routes --info " .. selection["value"]["url"])
+				local result = handle:read("*a")
+				handle:close()
+				local file_path, line_number = result:match('Module: %S+\nFunction: %S+\n(%S+):(%d+)')
+
+				-- Open the file where the controller module for the route is defined.
+				vim.cmd('e ' .. file_path)
 			end)
 
 			return true
