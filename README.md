@@ -1,8 +1,7 @@
 # Telescope Phoenix Routes
-> View and access your [Phoenix](https://github.com/phoenixframework/phoenix) routes using [Telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
+> View and access [Phoenix](https://github.com/phoenixframework/phoenix) routes using [Telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
 
-
-![demo](/assets/demo.gif)
+![demo](https://github.com/joaofcosta/telescope-phx-routes/assets/6334322/01f2b378-708a-40fb-9e71-0c48807bba6c)
 
 ## Table of Contents
 
