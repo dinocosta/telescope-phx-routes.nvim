@@ -13,44 +13,48 @@ M.phoenix_routes = function(opts)
 		prompt_title = "Phoenix Routes",
 		finder = finders.new_oneshot_job({ "mix", "phx.routes" }, {
 			entry_maker = function(line)
-				-- Since we know that every line that is output from `mix phx.routes` follows the same pattern we can easily
-				-- leverage Lua's patterns to match on the parts we care about.
-				-- The format of the line output from `mix phx.routes` is:
-				--
-				-- [WHITESPACE][PATH][WHITESPACE][METHOD][WHITESPACE][URL][WHITESPACE][CONTROLLER][WHITESPACE][ACTION]
-				-- 
-				-- For example:
-				--
-				--     api_v1_path   GET   /api/v1/users   AppWeb.API.V1.UserController   :index
-				--
-				-- We can match multiple whitespace characters with the `%s+` character class, while using `%S+` yields the 
-				-- opposite result, i.e., matches on all characters except the space character, which should help 
-				-- understand the string used in the `match` function below.
-				local path, method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
+				-- The `mix phx.routes` command always prints an empty line at the end, as such, we have to make sure we ignore
+				-- that line successfully, otherwise Telescope will consider it an entry too.
+				if line ~= '' then
+					-- Since we know that every line that is output from `mix phx.routes` follows the same pattern we can easily
+					-- leverage Lua's patterns to match on the parts we care about.
+					-- The format of the line output from `mix phx.routes` is:
+					--
+					-- [WHITESPACE][PATH][WHITESPACE][METHOD][WHITESPACE][URL][WHITESPACE][CONTROLLER][WHITESPACE][ACTION]
+					-- 
+					-- For example:
+					--
+					--     api_v1_path   GET   /api/v1/users   AppWeb.API.V1.UserController   :index
+					--
+					-- We can match multiple whitespace characters with the `%s+` character class, while using `%S+` yields the 
+					-- opposite result, i.e., matches on all characters except the space character, which should help 
+					-- understand the string used in the `match` function below.
+					local path, method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
 
-				-- If path is nil it means that this route actually does not have a path defined, so we should try to match
-				-- instead on only the method, url, controller and action.
-				if path == nil then
-					method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
+					-- If path is nil it means that this route actually does not have a path defined, so we should try to match
+					-- instead on only the method, url, controller and action.
+					if path == nil then
+						method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
+					end
+
+					-- If method is nil it means that this route is likely a LiveView route, which does not have an action, matching
+					-- only on the method, url and controller will give us the intended result.
+					if method == nil then
+						method, url, controller = line:match('(%S+)%s+(%S+)%s+(%S+)')
+					end
+
+					-- I tried using both `table.concat` as well as the string concatenation operator (`..`) in the table returned
+					-- by this function and found that, only when using `table.concat` and assigning to a variable, could I get
+					-- the results to consistently appear in the results list. Using any other option would usually result in
+					-- results only being shown after the user started typing in the search box.
+					local result = table.concat({ method, " ", url })
+
+					return {
+						value = { path = path, method = method, url = url, controller = controller, action = action},
+						display = result,
+						ordinal = result
+					}
 				end
-
-				-- If method is nil it means that this route is likely a LiveView route, which does not have an action, matching
-				-- only on the method, url and controller will give us the intended result.
-				if method == nil then
-					method, url, controller = line:match('(%S+)%s+(%S+)%s+(%S+)')
-				end
-
-				-- I tried using both `table.concat` as well as the string concatenation operator (`..`) in the table returned
-				-- by this function and found that, only when using `table.concat` and assigning to a variable, could I get
-				-- the results to consistently appear in the results list. Using any other option would usually result in
-				-- results only being shown after the user started typing in the search box.
-				local result = table.concat({ method, " ", url })
-
-				return {
-					value = { path = path, method = method, url = url, controller = controller, action = action},
-					display = result,
-					ordinal = result
-				}
 			end
 		}),
 		sorter = conf.generic_sorter(opts),
