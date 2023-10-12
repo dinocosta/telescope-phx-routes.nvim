@@ -40,10 +40,16 @@ M.phoenix_routes = function(opts)
 					method, url, controller = line:match('(%S+)%s+(%S+)%s+(%S+)')
 				end
 
+				-- I tried using both `table.concat` as well as the string concatenation operator (`..`) in the table returned
+				-- by this function and found that, only when using `table.concat` and assigning to a variable, could I get
+				-- the results to consistently appear in the results list. Using any other option would usually result in
+				-- results only being shown after the user started typing in the search box.
+				local result = table.concat({ method, " ", url })
+
 				return {
 					value = { path = path, method = method, url = url, controller = controller, action = action},
-					display = table.concat({ method, " ", url }),
-					ordinal = table.concat({ method, " ", url })
+					display = result,
+					ordinal = result
 				}
 			end
 		}),
