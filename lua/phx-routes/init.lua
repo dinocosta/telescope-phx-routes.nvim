@@ -28,8 +28,16 @@ M.phoenix_routes = function(opts)
 				-- understand the string used in the `match` function below.
 				local path, method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
 
+				-- If path is nil it means that this route actually does not have a path defined, so we should try to match
+				-- instead on only the method, url, controller and action.
 				if path == nil then
 					method, url, controller, action = line:match('(%S+)%s+(%S+)%s+(%S+)%s+(%S+)')
+				end
+
+				-- If method is nil it means that this route is likely a LiveView route, which does not have an action, matching
+				-- only on the method, url and controller will give us the intended result.
+				if method == nil then
+					method, url, controller = line:match('(%S+)%s+(%S+)%s+(%S+)')
 				end
 
 				return {
